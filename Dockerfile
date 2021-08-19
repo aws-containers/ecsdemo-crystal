@@ -1,11 +1,12 @@
-FROM crystallang/crystal:0.26.1
+FROM public.ecr.aws/aws-containers/crystal-dependency-image:0.26.1
 WORKDIR /src/
 COPY . .
 RUN shards install
 RUN crystal build --release --link-flags="-static" src/server.cr
 
-FROM alpine:latest
-RUN apk -U add curl jq bash python3 py3-pip &&\
+FROM public.ecr.aws/ubuntu/ubuntu:18.04
+RUN apt-get update &&\
+    apt install -y curl jq bash python3 python3-pip &&\
     pip3 install awscli netaddr
 COPY --from=0 /src/startup.sh /startup.sh
 COPY --from=0 /src/server /server
