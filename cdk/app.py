@@ -210,24 +210,24 @@ class CrystalService(core.Stack):
         
         # Enable app mesh Xray observability
         #ammmesh-xray-uncomment
-        self.xray_container = self.fargate_task_def.add_container(
-            "CrystalServiceXrayContdef",
-            image=aws_ecs.ContainerImage.from_registry("amazon/aws-xray-daemon"),
-            logging=aws_ecs.LogDriver.aws_logs(
-                stream_prefix='/xray-container',
-                log_group=self.logGroup
-            ),
-            essential=True,
-            container_name="xray",
-            memory_reservation_mib=170,
-            user="1337"
-        )
+        # self.xray_container = self.fargate_task_def.add_container(
+        #     "CrystalServiceXrayContdef",
+        #     image=aws_ecs.ContainerImage.from_registry("amazon/aws-xray-daemon"),
+        #     logging=aws_ecs.LogDriver.aws_logs(
+        #         stream_prefix='/xray-container',
+        #         log_group=self.logGroup
+        #     ),
+        #     essential=True,
+        #     container_name="xray",
+        #     memory_reservation_mib=170,
+        #     user="1337"
+        # )
         
-        self.envoy_container.add_container_dependencies(aws_ecs.ContainerDependency(
-               container=self.xray_container,
-               condition=aws_ecs.ContainerDependencyCondition.START
-           )
-        )
+        # self.envoy_container.add_container_dependencies(aws_ecs.ContainerDependency(
+        #       container=self.xray_container,
+        #       condition=aws_ecs.ContainerDependencyCondition.START
+        #   )
+        # )
         #ammmesh-xray-uncomment
         
         self.fargate_task_def.add_to_task_role_policy(
