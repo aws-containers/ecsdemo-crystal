@@ -84,7 +84,7 @@ class CrystalService(core.Stack):
             "CrystalServiceContainerDef",
             image=aws_ecs.ContainerImage.from_registry("adam9098/ecsdemo-crystal"),
             # image=aws_ecs.ContainerImage.from_registry("{}.dkr.ecr.{}.amazonaws.com/ecsdemo-crystal".format(getenv('AWS_ACCOUNT_ID'), getenv('AWS_DEFAULT_REGION'))),
-            memory_reservation_mib=170,
+            memory_reservation_mib=128,
             logging=aws_ecs.LogDriver.aws_logs(
                 stream_prefix='/crystal-container',
                 log_group=self.logGroup
@@ -165,6 +165,7 @@ class CrystalService(core.Stack):
             virtual_node_name="crystal",
             listeners=[aws_appmesh.VirtualNodeListener.http(port=3000)],
             service_discovery=aws_appmesh.ServiceDiscovery.cloud_map(self.fargate_service.cloud_map_service),
+            access_log=aws_appmesh.AccessLog.from_file_path("/dev/stdout")
         )
         
        # App Mesh envoy proxy container configuration
@@ -172,7 +173,7 @@ class CrystalService(core.Stack):
             "CrystalServiceProxyContdef",
             image=aws_ecs.ContainerImage.from_registry("public.ecr.aws/appmesh/aws-appmesh-envoy:v1.18.3.0-prod"),
             container_name="envoy",
-            memory_reservation_mib=170,
+            memory_reservation_mib=128,
             environment={
                 "REGION": getenv('AWS_DEFAULT_REGION'),
                 "ENVOY_LOG_LEVEL": "debug",
@@ -210,24 +211,24 @@ class CrystalService(core.Stack):
         
         # Enable app mesh Xray observability
         #ammmesh-xray-uncomment
-        self.xray_container = self.fargate_task_def.add_container(
-            "CrystalServiceXrayContdef",
-            image=aws_ecs.ContainerImage.from_registry("amazon/aws-xray-daemon"),
-            logging=aws_ecs.LogDriver.aws_logs(
-                stream_prefix='/xray-container',
-                log_group=self.logGroup
-            ),
-            essential=True,
-            container_name="xray",
-            memory_reservation_mib=170,
-            user="1337"
-        )
+        # self.xray_container = self.fargate_task_def.add_container(
+        #     "CrystalServiceXrayContdef",
+        #     image=aws_ecs.ContainerImage.from_registry("amazon/aws-xray-daemon"),
+        #     logging=aws_ecs.LogDriver.aws_logs(
+        #         stream_prefix='/xray-container',
+        #         log_group=self.logGroup
+        #     ),
+        #     essential=True,
+        #     container_name="xray",
+        #     memory_reservation_mib=256,
+        #     user="1337"
+        # )
         
-        self.envoy_container.add_container_dependencies(aws_ecs.ContainerDependency(
-               container=self.xray_container,
-               condition=aws_ecs.ContainerDependencyCondition.START
-           )
-        )
+        # self.envoy_container.add_container_dependencies(aws_ecs.ContainerDependency(
+        #       container=self.xray_container,
+        #       condition=aws_ecs.ContainerDependencyCondition.START
+        #   )
+        # )
         #ammmesh-xray-uncomment
         
         self.fargate_task_def.add_to_task_role_policy(
