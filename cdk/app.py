@@ -220,11 +220,7 @@ class CrystalService(core.Stack):
         #     ),
         #     essential=True,
         #     container_name="xray",
-<<<<<<< HEAD
         #     memory_reservation_mib=256,
-=======
-        #     memory_reservation_mib=170,
->>>>>>> 9c5a311d017ba228ba748f2b6f7ff732f244b2ac
         #     user="1337"
         # )
         
