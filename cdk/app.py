@@ -82,8 +82,7 @@ class CrystalService(core.Stack):
         
         self.container = self.fargate_task_def.add_container(
             "CrystalServiceContainerDef",
-            image=aws_ecs.ContainerImage.from_registry("adam9098/ecsdemo-crystal"),
-            # image=aws_ecs.ContainerImage.from_registry("{}.dkr.ecr.{}.amazonaws.com/ecsdemo-crystal".format(getenv('AWS_ACCOUNT_ID'), getenv('AWS_DEFAULT_REGION'))),
+            image=aws_ecs.ContainerImage.from_registry("public.ecr.aws/aws-containers/ecsdemo-crystal"),
             memory_reservation_mib=128,
             logging=aws_ecs.LogDriver.aws_logs(
                 stream_prefix='/crystal-container',
