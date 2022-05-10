@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "ecsdemo-crystal.fullname" . }}-test-connection"
+  labels:
+    {{- include "ecsdemo-crystal.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "ecsdemo-crystal.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never
