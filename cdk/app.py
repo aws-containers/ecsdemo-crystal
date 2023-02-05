@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 
-# cdk: 1.25.0
+import aws_cdk as cdk
+import logging as log
+from constructs import Construct
 from aws_cdk import (
+    App, CfnOutput, Stack, Environment, Fn, Duration,
     aws_ec2,
     aws_ecs,
-    aws_ecs_patterns,
     aws_iam,
     aws_servicediscovery,
-    core,
     aws_appmesh,
     aws_logs
 )
@@ -16,9 +17,9 @@ from os import getenv
 
 
 # Creating a construct that will populate the required objects created in the platform repo such as vpc, ecs cluster, and service discovery namespace
-class BasePlatform(core.Construct):
+class BasePlatform(Construct):
     
-    def __init__(self, scope: core.Construct, id: str, **kwargs):
+    def __init__(self, scope: Construct, id: str, **kwargs):
         super().__init__(scope, id, **kwargs)
         self.environment_name = 'ecsworkshop'
 
@@ -30,14 +31,14 @@ class BasePlatform(core.Construct):
         
         self.sd_namespace = aws_servicediscovery.PrivateDnsNamespace.from_private_dns_namespace_attributes(
             self, "SDNamespace",
-            namespace_name=core.Fn.import_value('NSNAME'),
-            namespace_arn=core.Fn.import_value('NSARN'),
-            namespace_id=core.Fn.import_value('NSID')
+            namespace_name=cdk.Fn.import_value('NSNAME'),
+            namespace_arn=cdk.Fn.import_value('NSARN'),
+            namespace_id=cdk.Fn.import_value('NSID')
         )
         
         self.ecs_cluster = aws_ecs.Cluster.from_cluster_attributes(
             self, "ECSCluster",
-            cluster_name=core.Fn.import_value('ECSClusterName'),
+            cluster_name=cdk.Fn.import_value('ECSClusterName'),
             security_groups=[],
             vpc=self.vpc,
             default_cloud_map_namespace=self.sd_namespace
@@ -45,13 +46,13 @@ class BasePlatform(core.Construct):
         
         self.services_sec_grp = aws_ec2.SecurityGroup.from_security_group_id(
             self, "ServicesSecGrp",
-            security_group_id=core.Fn.import_value('ServicesSecGrp')
+            security_group_id=cdk.Fn.import_value('ServicesSecGrp')
         )
         
 
-class CrystalService(core.Stack):
+class CrystalService(Stack):
     
-    def __init__(self, scope: core.Stack, id: str, **kwargs):
+    def __init__(self, scope: Stack, id: str, **kwargs):
         super().__init__(scope, id, **kwargs)
 
         self.base_platform = BasePlatform(self, self.stack_name)
@@ -105,8 +106,8 @@ class CrystalService(core.Stack):
             service_name='ecsdemo-crystal',
             task_definition=self.fargate_task_def,
             cluster=self.base_platform.ecs_cluster,
-            security_group=self.base_platform.services_sec_grp,
-            desired_count=3,
+            security_groups=[self.base_platform.services_sec_grp],
+            desired_count=1,
             cloud_map_options=aws_ecs.CloudMapOptions(
                 cloud_map_namespace=self.base_platform.sd_namespace,
                 name='ecsdemo-crystal'
@@ -130,8 +131,8 @@ class CrystalService(core.Stack):
         # self.autoscale.scale_on_cpu_utilization(
         #     "CPUAutoscaling",
         #     target_utilization_percent=20,
-        #     scale_in_cooldown=core.Duration.seconds(30),
-        #     scale_out_cooldown=core.Duration.seconds(30)
+        #     scale_in_cooldown=Duration.seconds(30),
+        #     scale_out_cooldown=Duration.seconds(30)
         # )
         
         
@@ -145,7 +146,7 @@ class CrystalService(core.Stack):
         self.mesh = aws_appmesh.Mesh.from_mesh_arn(
             self,
             "EcsWorkShop-AppMesh",
-            mesh_arn=core.Fn.import_value("MeshArn")
+            mesh_arn=cdk.Fn.import_value("MeshArn")
         )
         
         # Importing App Mesh virtual gateway
@@ -153,7 +154,7 @@ class CrystalService(core.Stack):
             self,
             "Mesh-VGW",
             mesh=self.mesh,
-            virtual_gateway_name=core.Fn.import_value("MeshVGWName")
+            virtual_gateway_name=cdk.Fn.import_value("MeshVGWName")
         )
         
         # App Mesh virtual node configuration
@@ -186,8 +187,8 @@ class CrystalService(core.Stack):
                 log_group=self.logGroup
             ),
             health_check=aws_ecs.HealthCheck(
-                interval=core.Duration.seconds(5),
-                timeout=core.Duration.seconds(10),
+                interval=cdk.Duration.seconds(5),
+                timeout=cdk.Duration.seconds(10),
                 retries=10,
                 command=["CMD-SHELL","curl -s http://localhost:9901/server_info | grep state | grep -q LIVE"],
             ),
@@ -258,14 +259,14 @@ class CrystalService(core.Stack):
         )
         
         # Exporting CF (outputs) to make references from other cdk projects.
-        core.CfnOutput(self, "MeshCrystalVSARN",value=self.mesh_crystal_vs.virtual_service_arn,export_name="MeshCrystalVSARN")
-        core.CfnOutput(self, "MeshCrystalVSName",value=self.mesh_crystal_vs.virtual_service_name,export_name="MeshCrystalVSName")
+        CfnOutput(self, "MeshCrystalVSARN",value=self.mesh_crystal_vs.virtual_service_arn,export_name="MeshCrystalVSARN")
+        CfnOutput(self, "MeshCrystalVSName",value=self.mesh_crystal_vs.virtual_service_name,export_name="MeshCrystalVSName")
         
 
 
-_env = core.Environment(account=getenv('AWS_ACCOUNT_ID'), region=getenv('AWS_DEFAULT_REGION'))
+_env = Environment(account=getenv('AWS_ACCOUNT_ID'), region=getenv('AWS_DEFAULT_REGION'))
 environment = "ecsworkshop"
 stack_name = "{}-crystal".format(environment)
-app = core.App()
+app = App()
 CrystalService(app, stack_name, env=_env)
 app.synth()
