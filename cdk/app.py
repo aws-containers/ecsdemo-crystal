@@ -4,7 +4,7 @@ import aws_cdk as cdk
 import logging as log
 from constructs import Construct
 from aws_cdk import (
-    App, CfnOutput, Stack, Environment,
+    App, CfnOutput, Stack, Environment, Fn, Duration,
     aws_ec2,
     aws_ecs,
     aws_iam,
@@ -107,7 +107,7 @@ class CrystalService(Stack):
             task_definition=self.fargate_task_def,
             cluster=self.base_platform.ecs_cluster,
             security_groups=[self.base_platform.services_sec_grp],
-            desired_count=3,
+            desired_count=1,
             cloud_map_options=aws_ecs.CloudMapOptions(
                 cloud_map_namespace=self.base_platform.sd_namespace,
                 name='ecsdemo-crystal'
@@ -131,8 +131,8 @@ class CrystalService(Stack):
         # self.autoscale.scale_on_cpu_utilization(
         #     "CPUAutoscaling",
         #     target_utilization_percent=20,
-        #     scale_in_cooldown=core.Duration.seconds(30),
-        #     scale_out_cooldown=core.Duration.seconds(30)
+        #     scale_in_cooldown=Duration.seconds(30),
+        #     scale_out_cooldown=Duration.seconds(30)
         # )
         
         
