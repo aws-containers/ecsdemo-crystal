@@ -63,16 +63,16 @@ class CrystalService(Stack):
             cpu='256',
             memory_mib='512',
             #appmesh-proxy-uncomment
-            # proxy_configuration=aws_ecs.AppMeshProxyConfiguration( 
-            #     container_name="envoy",
-            #     properties=aws_ecs.AppMeshProxyConfigurationProps(
-            #         app_ports=[3000],
-            #         proxy_ingress_port=15000,
-            #         proxy_egress_port=15001,
-            #         egress_ignored_i_ps=["169.254.170.2","169.254.169.254"],
-            #         ignored_uid=1337
-            #     )
-            # )
+             proxy_configuration=aws_ecs.AppMeshProxyConfiguration( 
+                 container_name="envoy",
+                 properties=aws_ecs.AppMeshProxyConfigurationProps(
+                     app_ports=[3000],
+                     proxy_ingress_port=15000,
+                     proxy_egress_port=15001,
+                     egress_ignored_i_ps=["169.254.170.2","169.254.169.254"],
+                     ignored_uid=1337
+                 )
+             )
             #appmesh-proxy-uncomment
         )
         
@@ -137,7 +137,7 @@ class CrystalService(Stack):
         
         
         # App Mesh Implementation
-        # self.appmesh()
+         self.appmesh()
 
         
     def appmesh(self):
